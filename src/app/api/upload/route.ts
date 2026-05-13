@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, STORAGE_BUCKET } from '@/lib/supabase';
+import { getSupabase, STORAGE_BUCKET } from '@/lib/supabase';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 
@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
 
     // Try Supabase Storage first
     try {
+      const supabase = getSupabase();
       const { data, error } = await supabase.storage
         .from(STORAGE_BUCKET)
         .upload(filename, buffer, {
