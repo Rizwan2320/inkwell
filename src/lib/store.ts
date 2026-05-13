@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 export type Page =
   | 'blog'
@@ -44,39 +45,47 @@ interface AppState {
   clearToast: () => void;
 }
 
-export const useAppStore = create<AppState>((set, get) => ({
-  currentPage: 'blog',
-  previousPage: null,
-  navigate: (page) => set({ previousPage: get().currentPage, currentPage: page }),
-  goBack: () => {
-    const { previousPage } = get();
-    if (previousPage) {
-      set({ currentPage: previousPage, previousPage: null });
-    } else {
-      set({ currentPage: 'blog' });
+export const useAppStore = create<AppState>()(
+  persist(
+    (set, get) => ({
+      currentPage: 'blog',
+      previousPage: null,
+      navigate: (page) => set({ previousPage: get().currentPage, currentPage: page }),
+      goBack: () => {
+        const { previousPage } = get();
+        if (previousPage) {
+          set({ currentPage: previousPage, previousPage: null });
+        } else {
+          set({ currentPage: 'blog' });
+        }
+      },
+
+      editingPostId: null,
+      setEditingPostId: (id) => set({ editingPostId: id }),
+
+      viewingPostId: null,
+      setViewingPostId: (id) => set({ viewingPostId: id }),
+
+      searchQuery: '',
+      setSearchQuery: (q) => set({ searchQuery: q }),
+
+      selectedCategoryId: null,
+      setSelectedCategoryId: (id) => set({ selectedCategoryId: id }),
+
+      user: null,
+      setUser: (user) => set({ user }),
+      isAdmin: false,
+      setIsAdmin: (isAdmin) => set({ isAdmin }),
+
+      toastMessage: null,
+      toastType: 'success',
+      showToast: (message, type = 'success') =>
+        set({ toastMessage: message, toastType: type }),
+      clearToast: () => set({ toastMessage: null }),
+    }),
+    {
+      name: 'inkwell-storage',
+      partialize: (state) => ({ isAdmin: state.isAdmin }),
     }
-  },
-
-  editingPostId: null,
-  setEditingPostId: (id) => set({ editingPostId: id }),
-
-  viewingPostId: null,
-  setViewingPostId: (id) => set({ viewingPostId: id }),
-
-  searchQuery: '',
-  setSearchQuery: (q) => set({ searchQuery: q }),
-
-  selectedCategoryId: null,
-  setSelectedCategoryId: (id) => set({ selectedCategoryId: id }),
-
-  user: null,
-  setUser: (user) => set({ user }),
-  isAdmin: false,
-  setIsAdmin: (isAdmin) => set({ isAdmin }),
-
-  toastMessage: null,
-  toastType: 'success',
-  showToast: (message, type = 'success') =>
-    set({ toastMessage: message, toastType: type }),
-  clearToast: () => set({ toastMessage: null }),
-}));
+  )
+);
