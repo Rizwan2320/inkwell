@@ -46,8 +46,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
-    // Verify password with bcrypt
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    // Check if password matches - support both hashed and plain text
+    let isValidPassword = false;
+
+    // Try bcrypt first (for hashed passwords)
+    if (user.password.startsWith('$2')) {
+      isValidPassword = await bcrypt.compare(password, user.password);
+    } else {
+      // Fallback to plain text (for backwards compatibility)
+      isValidPassword = password === user.password;
+    }
+
+    // If valid and password was plain text, upgrade to hashed
+    if (isValidPassword && !user.password.startsWith('$2')) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await db.user.update({
+        where: { id: user.id },
+        data: { password: hashedPassword },
+      });
+    }
+
     if (!isValidPassword) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
